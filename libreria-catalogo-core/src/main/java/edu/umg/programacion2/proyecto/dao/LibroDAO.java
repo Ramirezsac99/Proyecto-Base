@@ -25,8 +25,8 @@ import java.util.Optional;
 public class LibroDAO {
 
     public Libro crear(Libro libro) throws SQLException {
-        String sql = "INSERT INTO libros (titulo, autor, categoria, precio, existencias, anio_publicacion) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+    	String sql = "INSERT INTO libros (titulo, autor, categoria, precio, existencias, anio_publicacion, es_best_seller) "
+    	        + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection con = ConexionBD.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -37,6 +37,7 @@ public class LibroDAO {
             stmt.setBigDecimal(4, libro.getPrecio());
             stmt.setInt(5, libro.getExistencias());
             stmt.setInt(6, libro.getAnioPublicacion());
+            stmt.setBoolean(7, libro.isEsBestSeller());
 
             stmt.executeUpdate();
 
@@ -50,7 +51,7 @@ public class LibroDAO {
     }
 
     public List<Libro> listarTodos() throws SQLException {
-        String sql = "SELECT id, titulo, autor, categoria, precio, existencias, anio_publicacion "
+        String sql = "SELECT id, titulo, autor, categoria, precio, existencias, anio_publicacion, es_best_seller "
                 + "FROM libros ORDER BY id";
 
         List<Libro> libros = new ArrayList<>();
@@ -67,7 +68,7 @@ public class LibroDAO {
     }
 
     public Optional<Libro> buscarPorId(int id) throws SQLException {
-        String sql = "SELECT id, titulo, autor, categoria, precio, existencias, anio_publicacion "
+        String sql = "SELECT id, titulo, autor, categoria, precio, existencias, anio_publicacion, es_best_seller "
                 + "FROM libros WHERE id = ?";
 
         try (Connection con = ConexionBD.obtenerConexion();
@@ -85,8 +86,8 @@ public class LibroDAO {
     }
 
     public boolean actualizar(Libro libro) throws SQLException {
-        String sql = "UPDATE libros SET titulo = ?, autor = ?, categoria = ?, "
-                + "precio = ?, existencias = ?, anio_publicacion = ? WHERE id = ?";
+    	String sql = "UPDATE libros SET titulo = ?, autor = ?, categoria = ?, "
+    	        + "precio = ?, existencias = ?, anio_publicacion = ?, es_best_seller = ? WHERE id = ?";
 
         try (Connection con = ConexionBD.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -98,6 +99,7 @@ public class LibroDAO {
             stmt.setInt(5, libro.getExistencias());
             stmt.setInt(6, libro.getAnioPublicacion());
             stmt.setInt(7, libro.getId());
+            stmt.setBoolean(7, libro.isEsBestSeller());
 
             int filasAfectadas = stmt.executeUpdate();
             return filasAfectadas > 0;
@@ -126,6 +128,7 @@ public class LibroDAO {
                 rs.getBigDecimal("precio"),
                 rs.getInt("existencias"),
                 rs.getInt("anio_publicacion")
+                rs.getBoolean("es_best_seller")
         );
     }
 }
