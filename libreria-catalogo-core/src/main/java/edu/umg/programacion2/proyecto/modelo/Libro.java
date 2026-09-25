@@ -17,24 +17,26 @@ public class Libro {
     private BigDecimal precio;
     private int existencias;
     private int anioPublicacion;
+    private boolean esBestSeller;
 
     public Libro() {
     }
 
     /** Constructor sin id, útil al crear un libro nuevo (el id lo asigna la BD). */
     public Libro(String titulo, String autor, String categoria,
-                 BigDecimal precio, int existencias, int anioPublicacion) {
+                 BigDecimal precio, int existencias, int anioPublicacion, boolean esBestSeller) {
         this.titulo = titulo;
         this.autor = autor;
         this.categoria = categoria;
         this.precio = precio;
         this.existencias = existencias;
         this.anioPublicacion = anioPublicacion;
+        this.esBestSeller = esBestSeller;
     }
 
     /** Constructor completo, usado al leer una fila ya existente de la BD. */
     public Libro(int id, String titulo, String autor, String categoria,
-                 BigDecimal precio, int existencias, int anioPublicacion) {
+                 BigDecimal precio, int existencias, int anioPublicacion, boolean esBestSeller) {
         this.id = id;
         this.titulo = titulo;
         this.autor = autor;
@@ -42,6 +44,7 @@ public class Libro {
         this.precio = precio;
         this.existencias = existencias;
         this.anioPublicacion = anioPublicacion;
+        this.esBestSeller = esBestSeller;
     }
 
     public int getId() {
@@ -98,6 +101,14 @@ public class Libro {
 
     public void setAnioPublicacion(int anioPublicacion) {
         this.anioPublicacion = anioPublicacion;
+    }
+    
+    public boolean isEsBestSeller() {
+        return esBestSeller;
+    }
+
+    public void setEsBestSeller(boolean esBestSeller) {
+        this.esBestSeller = esBestSeller;
     }
 
     @Override
