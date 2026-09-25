@@ -1,7 +1,4 @@
--- =====================================================================
--- Esquema propio para la Variante B: Catalogo de una libreria
--- Autor: Javier (diseño propio a partir de la descripcion conceptual)
--- =====================================================================
+
 
 CREATE DATABASE IF NOT EXISTS libreria_catalogo
     CHARACTER SET utf8mb4
@@ -50,13 +47,14 @@ CREATE TABLE IF NOT EXISTS libros (
     precio             DECIMAL(8,2)   NOT NULL,
     existencias        INT            NOT NULL DEFAULT 0,
     anio_publicacion   SMALLINT       NOT NULL,
+    es_best_seller     BOOLEAN        NOT NULL DEFAULT FALSE,
 
     CONSTRAINT chk_libros_precio       CHECK (precio > 0),
     CONSTRAINT chk_libros_existencias  CHECK (existencias >= 0)
 );
 
 -- Datos de ejemplo (opcional, util para probar la UI de una vez)
-INSERT INTO libros (titulo, autor, categoria, precio, existencias, anio_publicacion) VALUES
+INSERT INTO libros (titulo, autor, categoria, precio, existencias, anio_publicacion, es_best_seller) VALUES
     ('Cien años de soledad', 'Gabriel Garcia Marquez', 'Novela',  145.00, 12, 1967),
     ('Clean Code',           'Robert C. Martin',       'Tecnico', 220.50, 5,  2008),
     ('El principito',        'Antoine de Saint-Exupery','Infantil', 85.00, 0, 1943);
