@@ -9,7 +9,9 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.Year;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Ventana principal del catalogo de libros.
@@ -33,11 +35,13 @@ public class VentanaPrincipal extends JFrame {
     private JTextField campoPrecio;
     private JTextField campoExistencias;
     private JTextField campoAnio;
+    private JCheckBox campoEsBestSeller;
 
     private JButton botonNuevo;
     private JButton botonGuardar;
     private JButton botonEliminar;
     private JButton botonRefrescar;
+    private JButton botonResumenCategorias;
 
     /** Id del libro actualmente seleccionado en la tabla, o null si estamos creando uno nuevo. */
     private Integer idSeleccionado = null;
@@ -54,7 +58,7 @@ public class VentanaPrincipal extends JFrame {
 
     private void construirInterfaz() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 500);
+        setSize(950, 520);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
@@ -63,7 +67,7 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private JComponent construirPanelTabla() {
-        String[] columnas = {"ID", "Titulo", "Autor", "Categoria", "Precio", "Existencias", "Año"};
+        String[] columnas = {"ID", "Titulo", "Autor", "Categoria", "Precio", "Existencias", "Año", "Best seller"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int fila, int columna) {
@@ -85,7 +89,7 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private JComponent construirPanelFormulario() {
-        JPanel panelCampos = new JPanel(new GridLayout(2, 6, 5, 5));
+        JPanel panelCampos = new JPanel(new GridLayout(2, 7, 5, 5));
         panelCampos.setBorder(BorderFactory.createTitledBorder("Datos del libro"));
 
         campoTitulo = new JTextField();
@@ -94,6 +98,7 @@ public class VentanaPrincipal extends JFrame {
         campoPrecio = new JTextField();
         campoExistencias = new JTextField();
         campoAnio = new JTextField();
+        campoEsBestSeller = new JCheckBox("Es best seller");
 
         panelCampos.add(new JLabel("Titulo:"));
         panelCampos.add(new JLabel("Autor:"));
@@ -101,6 +106,7 @@ public class VentanaPrincipal extends JFrame {
         panelCampos.add(new JLabel("Precio:"));
         panelCampos.add(new JLabel("Existencias:"));
         panelCampos.add(new JLabel("Año publicacion:"));
+        panelCampos.add(new JLabel(""));   // celda vacia para alinear con el checkbox
 
         panelCampos.add(campoTitulo);
         panelCampos.add(campoAutor);
@@ -108,22 +114,26 @@ public class VentanaPrincipal extends JFrame {
         panelCampos.add(campoPrecio);
         panelCampos.add(campoExistencias);
         panelCampos.add(campoAnio);
+        panelCampos.add(campoEsBestSeller);
 
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         botonNuevo = new JButton("Nuevo");
         botonGuardar = new JButton("Guardar");
         botonEliminar = new JButton("Eliminar");
         botonRefrescar = new JButton("Refrescar");
+        botonResumenCategorias = new JButton("Ver resumen por categoria");
 
         botonNuevo.addActionListener(e -> limpiarFormulario());
         botonGuardar.addActionListener(e -> guardar());
         botonEliminar.addActionListener(e -> eliminar());
         botonRefrescar.addActionListener(e -> cargarLibros());
+        botonResumenCategorias.addActionListener(e -> mostrarResumenPorCategoria());
 
         panelBotones.add(botonNuevo);
         panelBotones.add(botonGuardar);
         panelBotones.add(botonEliminar);
         panelBotones.add(botonRefrescar);
+        panelBotones.add(botonResumenCategorias);
 
         JPanel panelInferior = new JPanel(new BorderLayout());
         panelInferior.add(panelCampos, BorderLayout.CENTER);
@@ -147,7 +157,8 @@ public class VentanaPrincipal extends JFrame {
                         libro.getCategoria(),
                         libro.getPrecio(),
                         libro.getExistencias(),
-                        libro.getAnioPublicacion()
+                        libro.getAnioPublicacion(),
+                        libro.isEsBestSeller() ? "Si" : "No"
                 });
             }
         } catch (SQLException ex) {
@@ -168,6 +179,7 @@ public class VentanaPrincipal extends JFrame {
         campoPrecio.setText(String.valueOf(modeloTabla.getValueAt(filaSeleccionada, 4)));
         campoExistencias.setText(String.valueOf(modeloTabla.getValueAt(filaSeleccionada, 5)));
         campoAnio.setText(String.valueOf(modeloTabla.getValueAt(filaSeleccionada, 6)));
+        campoEsBestSeller.setSelected("Si".equals(modeloTabla.getValueAt(filaSeleccionada, 7)));
     }
 
     private void limpiarFormulario() {
@@ -179,6 +191,7 @@ public class VentanaPrincipal extends JFrame {
         campoPrecio.setText("");
         campoExistencias.setText("");
         campoAnio.setText("");
+        campoEsBestSeller.setSelected(false);
         campoTitulo.requestFocus();
     }
 
@@ -269,7 +282,7 @@ public class VentanaPrincipal extends JFrame {
         }
 
         return new Libro(titulo, autor, categoria.isEmpty() ? null : categoria,
-                precio, existencias, anio);
+                precio, existencias, anio, campoEsBestSeller.isSelected());
     }
 
     // -----------------------------------------------------------------
@@ -307,6 +320,43 @@ public class VentanaPrincipal extends JFrame {
             cargarLibros();
         } catch (SQLException ex) {
             mostrarErrorBD("No se pudo eliminar el libro.", ex);
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Mejora #10: agrupar y contar por categoria (en Java, sin GROUP BY)
+    // -----------------------------------------------------------------
+
+    private void mostrarResumenPorCategoria() {
+        try {
+            List<Libro> libros = libroDAO.listarTodos();
+
+            Map<String, Integer> conteoPorCategoria = new LinkedHashMap<>();
+
+            for (Libro libro : libros) {
+                String categoria = libro.getCategoria();
+                if (categoria == null || categoria.trim().isEmpty()) {
+                    categoria = "(sin categoria)";
+                }
+                int contadorActual = conteoPorCategoria.getOrDefault(categoria, 0);
+                conteoPorCategoria.put(categoria, contadorActual + 1);
+            }
+
+            if (conteoPorCategoria.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Todavia no hay libros en el catalogo.",
+                        "Resumen por categoria", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            StringBuilder resumen = new StringBuilder("Libros por categoria:\n\n");
+            for (Map.Entry<String, Integer> entrada : conteoPorCategoria.entrySet()) {
+                resumen.append(String.format("%-20s %d%n", entrada.getKey(), entrada.getValue()));
+            }
+
+            JOptionPane.showMessageDialog(this, resumen.toString(),
+                    "Resumen por categoria", JOptionPane.INFORMATION_MESSAGE);
+        } catch (SQLException ex) {
+            mostrarErrorBD("No se pudo calcular el resumen por categoria.", ex);
         }
     }
 
