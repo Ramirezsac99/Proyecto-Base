@@ -27,35 +27,4 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <!--
-                Empaqueta un jar ejecutable (con el DAO y el driver de MySQL
-                incluidos) para poder correr "java -jar ...jar" sin tener
-                que armar el classpath a mano. Opcional para la entrega,
-                pero comodo para probar.
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.1</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>edu.umg.programacion2.proyecto.MainUI</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>
